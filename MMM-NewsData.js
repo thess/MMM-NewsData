@@ -27,7 +27,11 @@ Module.register("MMM-NewsData", {
 
     // Import QR code script file
     getScripts: function() {
-        return ["https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"];
+        if (this.config.QRCode) {
+            return ["https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"];
+        } else {
+            return []
+        }
     },
 
     // Start process
@@ -38,9 +42,9 @@ Module.register("MMM-NewsData", {
         this.template = ""
         this.suspended = false;
         this.newsArticles = []
-        if (this.config.debug) Log.log("config: ", JSON.stringify(this.config))
+        // if (this.config.debug) Log.log("config: ", JSON.stringify(this.config))
         // Start function call to node_helper
-		this.sendSocketNotification("START", this.config)
+        this.sendSocketNotification("START", this.config)
         this.getInfo()
         // Schedule the next update
         this.scheduleUpdate()
@@ -50,17 +54,17 @@ Module.register("MMM-NewsData", {
         Log.info('Stopping module ' + this.name);
       },
 
-	resume: function () {
-		Log.info('Resuming module ' + this.name);
-		Log.debug('with config: ' + JSON.stringify(this.config));
-		this.suspended = false;
-		this.updateDom()
-	},
+    resume: function () {
+        Log.info('Resuming module ' + this.name);
+        Log.debug('with config: ' + JSON.stringify(this.config));
+        this.suspended = false;
+        this.updateDom()
+    },
 
-	suspend: function () {
-		Log.info('Suspending module ' + this.name);
-		this.suspended = true;
-	},
+    suspend: function () {
+        Log.info('Suspending module ' + this.name);
+        this.suspended = true;
+    },
 
     getDom: function() {
         var wrapper = document.createElement("div")
@@ -84,13 +88,14 @@ Module.register("MMM-NewsData", {
     // Schedule the next update
     scheduleUpdate: function(delay) {
         if (this.config.debug) Log.log("Fetch Interval: ", this.config.fetchInterval)
-        var nextLoad = this.config.fetchInterval
+        let nextLoad = this.config.fetchInterval
         if (typeof delay !== "undefined"  && delay >= 0) {
             nextLoad = delay
         }
+        const self = this
         setInterval(function() {
             //if (this.config.debug) Log.log("getting the next batch of data")
-            this.getInfo()
+            self.getInfo()
         }, nextLoad)
     },
 
@@ -101,14 +106,21 @@ Module.register("MMM-NewsData", {
 
     // Receive Socket Notification
     socketNotificationReceived: function(notification, payload) {
-        if (this.config.debug) Log.log("payload received: ", JSON.stringify(payload))
+        // if (this.config.debug) Log.log("payload received: ", JSON.stringify(payload))
         if (notification === "NEWSDATA_UPDATE") {
-            this.newsArticles = payload
-            if (this.firstUpdate === 0) {
-                this.firstUpdate = 1
-                this.index = 0
-                this.draw()
+            if (payload.length > 0) {
+                this.newsArticles = payload
+                if (this.firstUpdate === 0) {
+                    this.firstUpdate = 1
+                    this.index = 0
+                    this.draw()
+                }
+            } else {
+                console.log("Warning: No news items returned")
             }
+        }
+        else if (notification === "NEWSDATA_APPEND") {
+            this.newsArticles = this.newsArticles.concat(payload)
         }
     },
 
@@ -148,6 +160,8 @@ Module.register("MMM-NewsData", {
         var category = (article.category) ? article.category : "NEWSDATA"
         template = template.replace("%CLASSNAME%", category)
         var news = document.getElementById("NEWSDATA")
+        template = template.replace("%QRCODE_CANVAS%", (this.config.QRCode) ?
+                `<canvas id="NEWSDATA_QRCODE"></canvas>` : "" )
 
         var newsContent = document.getElementById("NEWS_CONTENT")
         news.classList.add("hideArticle")
@@ -166,6 +180,9 @@ Module.register("MMM-NewsData", {
                 });
             }
         }, 900)
+        if (this.newsArticles.length < this.config.pageSize) {
+            this.sendSocketNotification("APPEND", this.config)
+        }
         this.timer = setTimeout(() => {
             this.index++
             if (this.index >= this.newsArticles.length) this.index = 0
