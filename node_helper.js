@@ -51,8 +51,8 @@ module.exports = NodeHelper.create({
                 }
             }
             // Truncate gracefully if possible
-            if(item.description.length > 400) {
-                item.description = item.description.substring(0, 400) + " ..."
+            if(item.description.length > this.config.maxContent) {
+                item.description = item.description.substring(0, this.config.maxContent) + " ..."
             }
             const ellipsis = item.description.indexOf("[…]")
             if(ellipsis > 0) {

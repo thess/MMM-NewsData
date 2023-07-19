@@ -10,6 +10,7 @@ Module.register("MMM-NewsData", {
         fetchInterval: 1000*60*15,
         debug: false,
         QRCode: false,
+        maxContent: 600,
         query: {
             country: "us",
             category: "top",

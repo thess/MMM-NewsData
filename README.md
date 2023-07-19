@@ -49,6 +49,7 @@ The following properties can be configured:
 | `fetchInterval`              | The time interval between fetching new articles. There is a daily limit of 100 calls per apiKey. Best to set this to 100*60*60 
 | `apiKey`                     | You can obtain an API Key from [NewsAPi.org](https://newsapi.org/)
 | `QRCode`                     | Boolean true/false value to display QR code for article URL. Default is false.
+| `maxContent`                 | Maximum number of characters in article description display area. <br> **Default value:** `600`
 
 ## Query Options
 
@@ -81,6 +82,7 @@ When using `headlines`, `country` and `sources` cannot be used together. <br>The
                         templateFile: "template.html",
                         fetchInterval: 1000*60*15,
                         QRCode: true,
+                        maxContent: 500,
                         query: {
                                 country: "",
                                 category: "",
