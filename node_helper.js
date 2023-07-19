@@ -41,8 +41,23 @@ module.exports = NodeHelper.create({
                 item.author = item.creator[0]
             } else { item.author = "Unknown" }
             item.imageURL = item.image_url
+            // Get some article text if any
             if(!item.content) item.content = item.description
-            if(!item.description) item.description = item.content
+            if(!item.description) {
+                if(!item.content) {
+                    item.description = "Article description empty."
+                } else {
+                    item.description = item.content
+                }
+            }
+            // Truncate gracefully if possible
+            if(item.description.length > 400) {
+                item.description = item.description.substring(0, 400) + " ..."
+            }
+            const ellipsis = item.description.indexOf("[…]")
+            if(ellipsis > 0) {
+                item.description = item.description.substring(0, ellipsis + 3)
+            }
             articles.push(item)
         })
         return articles
